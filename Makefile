@@ -7,7 +7,6 @@ TEMP_DIR:=.intermediate
 
 # EPUB sources.
 
-COVER_IMAGE:=static/book/cover_front.jpg
 METADATA:=metadata.yaml
 SOURCES:=\
 	splash.html \
@@ -44,7 +43,6 @@ $(TEMP_DIR)/%.html: %.html
 
 $(EPUB_TARGET): $(PREPARED_SOURCES) | $(COVER_IMAGE) $(CSS_SOURCES) $(METADATA)
 	$(PANDOC_BIN) -f html -t epub3 -o $@ \
-		--epub-cover-image $(COVER_IMAGE) \
 		--metadata-file $(METADATA) \
 		$(foreach css,$(CSS_SOURCES),--css $(css)) \
 		$^
