@@ -5,6 +5,7 @@ EPUB_TARGET:=BuildYourOwnLisp.epub
 CONVERT_BIN:=convert
 JPEG_BIN:=jpegtran
 PANDOC_BIN:=pandoc
+PYTHON_BIN:=python
 TEMP_DIR:=.intermediate
 
 # EPUB sources.
@@ -53,8 +54,9 @@ $(TEMP_DIR)/static/img/%.jpg: static/img/%.png
 		| $(JPEG_BIN) > $@
 
 $(EPUB_TARGET): $(PREPARED_HTML_SOURCES) | $(PREPARED_IMG_SOURCES) $(CSS_SOURCES) $(METADATA)
-	$(PANDOC_BIN) -f html -t epub3 -o $@ \
+	$(PANDOC_BIN) -f html -t json $^ \
+		| $(PYTHON_BIN) pandoc-filter-nav.py epub3 \
+		| $(PANDOC_BIN) -f json -t epub3 -o $@ \
 		--toc-depth 1 \
 		--metadata-file $(METADATA) \
-		$(foreach css,$(CSS_SOURCES),--css $(css)) \
-		$^
+		$(foreach css,$(CSS_SOURCES),--css $(css))
