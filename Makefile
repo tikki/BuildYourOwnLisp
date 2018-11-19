@@ -12,7 +12,6 @@ TEMP_DIR:=.intermediate
 METADATA:=metadata.yaml
 HTML_SOURCES:=\
 	splash.html \
-	contents.html \
 	$(wildcard chapter?_*.html) \
 	$(wildcard chapter??_*.html) \
 	appendix_a_hand_rolled_parser.html \
@@ -55,6 +54,7 @@ $(TEMP_DIR)/static/img/%.jpg: static/img/%.png
 
 $(EPUB_TARGET): $(PREPARED_HTML_SOURCES) | $(PREPARED_IMG_SOURCES) $(CSS_SOURCES) $(METADATA)
 	$(PANDOC_BIN) -f html -t epub3 -o $@ \
+		--toc-depth 1 \
 		--metadata-file $(METADATA) \
 		$(foreach css,$(CSS_SOURCES),--css $(css)) \
 		$^
