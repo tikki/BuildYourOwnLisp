@@ -2,13 +2,15 @@
 
 EPUB_TARGET:=BuildYourOwnLisp.epub
 
+CONVERT_BIN:=convert
+JPEG_BIN:=jpegtran
 PANDOC_BIN:=pandoc
 TEMP_DIR:=.intermediate
 
 # EPUB sources.
 
 METADATA:=metadata.yaml
-SOURCES:=\
+HTML_SOURCES:=\
 	splash.html \
 	contents.html \
 	$(wildcard chapter?_*.html) \
@@ -19,13 +21,15 @@ SOURCES:=\
 CSS_SOURCES:=\
 	static/css/bootstrap.min.css \
 	static/css/code.css
+IMG_SOURCES:=$(shell grep -ohE 'static/img/[^.]+.png' *.html | sort | uniq)
 
-PREPARED_SOURCES:=$(addprefix $(TEMP_DIR)/,$(SOURCES))
+PREPARED_HTML_SOURCES:=$(addprefix $(TEMP_DIR)/,$(HTML_SOURCES))
+PREPARED_IMG_SOURCES:=$(addprefix $(TEMP_DIR)/,$(IMG_SOURCES:.png=.jpg))
 
 # Make targets.
 
 .PHONY: all clean epub
-.INTERMEDIATE: $(PREPARED_SOURCES)
+.INTERMEDIATE: $(PREPARED_HTML_SOURCES) $(PREPARED_IMG_SOURCES)
 
 all: epub
 
@@ -39,9 +43,17 @@ epub: $(EPUB_TARGET)
 
 $(TEMP_DIR)/%.html: %.html
 	mkdir -p $(@D)
-	sed -E 's#([^a-zA-Z./])/?(static/)#\1\2#g' $< >$@
+	sed -Ee 's#([^a-zA-Z./])/?(static/)#\1\2#g' \
+		-e 's/(href="[^/".#]+)([^".]*")/\1.html\2/g' \
+		-e 's#(static/img/[^.]+)\.png#$(TEMP_DIR)/\1.jpg#g' \
+		$< >$@
 
-$(EPUB_TARGET): $(PREPARED_SOURCES) | $(COVER_IMAGE) $(CSS_SOURCES) $(METADATA)
+$(TEMP_DIR)/static/img/%.jpg: static/img/%.png
+	mkdir -p $(@D)
+	$(CONVERT_BIN) $< -quality 80 jpg:- \
+		| $(JPEG_BIN) > $@
+
+$(EPUB_TARGET): $(PREPARED_HTML_SOURCES) | $(PREPARED_IMG_SOURCES) $(CSS_SOURCES) $(METADATA)
 	$(PANDOC_BIN) -f html -t epub3 -o $@ \
 		--metadata-file $(METADATA) \
 		$(foreach css,$(CSS_SOURCES),--css $(css)) \
