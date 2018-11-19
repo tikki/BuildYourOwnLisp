@@ -43,10 +43,12 @@ epub: $(EPUB_TARGET)
 
 $(TEMP_DIR)/%.html: %.html
 	mkdir -p $(@D)
-	sed -Ee 's#([^a-zA-Z./])/?(static/)#\1\2#g' \
+	$(PYTHON_BIN) html-resolve-references.py $< <$< \
+		| sed -Ee 's#([^a-zA-Z./])/?(static/)#\1\2#g' \
 		-e 's/(href="[^/".#]+)([^".]*")/\1.html\2/g' \
 		-e 's#(static/img/[^.]+)\.png#$(TEMP_DIR)/\1.jpg#g' \
-		$< >$@
+		-e 's/class="panel-collapse collapse"//g' \
+		>$@
 
 $(TEMP_DIR)/static/img/%.jpg: static/img/%.png
 	mkdir -p $(@D)
